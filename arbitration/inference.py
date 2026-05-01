@@ -9,8 +9,8 @@ T = TypeVar("T", bound=BaseModel)
 
 CRITIC_MODELS = {
     "factual": "llama-3.3-70b-versatile",
-    "logical": "mixtral-8x7b-32768",
-    "completeness": "gemma2-9b-it",
+    "logical": "qwen/qwen3-32b",
+    "completeness": "meta-llama/llama-4-scout-17b-16e-instruct",
     "adjudicator": "llama-3.3-70b-versatile",
 }
 
@@ -53,13 +53,19 @@ def call_model(
         except Exception as e:
             print(f"Groq failed for {critic}: {e} — falling back to Ollama")
 
-    client = _ollama_client()
-    return client.chat.completions.create(
-        model=settings.ollama_fallback_model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
-        ],
-        response_model=response_model,
-        max_retries=2,
-    )
+    try:
+        client = _ollama_client()
+        return client.chat.completions.create(
+            model=settings.ollama_fallback_model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            response_model=response_model,
+            max_retries=2,
+        )
+    except Exception as e:
+        raise RuntimeError(
+            f"Both Groq and Ollama failed for critic '{critic}'. "
+            f"Make sure GROQ_API_KEY is set or Ollama is running. Last error: {e}"
+        )
