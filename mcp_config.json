@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "llm-arbitration": {
+      "command": "/Users/macbook/Documents/personal projects/llm-arbitration/.venv/bin/python",
+      "args": [
+        "/Users/macbook/Documents/personal projects/llm-arbitration/mcp_server/server.py"
+      ]
+    }
+  }
+}
