@@ -5,10 +5,10 @@ from arbitration.schemas import (
     ArbitrateResponse,
     BatchArbitrateRequest,
     BatchArbitrateResponse,
-    CriticReport,
 )
 from arbitration.graph import arbitration_graph
 from arbitration.storage import init_db, save_arbitration, get_arbitration, get_analytics
+from arbitration.analytics import log_arbitration
 from arbitration.state import ArbitrationState
 import asyncio
 
@@ -57,6 +57,7 @@ def _run_arbitration(request: ArbitrateRequest) -> ArbitrateResponse:
 async def arbitrate(request: ArbitrateRequest):
     response = await asyncio.to_thread(_run_arbitration, request)
     await save_arbitration(request.llm_output, request.original_prompt, response)
+    log_arbitration(response)
     return response
 
 
@@ -67,6 +68,7 @@ async def arbitrate_batch(request: BatchArbitrateRequest):
 
     for item, response in zip(request.items, results):
         await save_arbitration(item.llm_output, item.original_prompt, response)
+        log_arbitration(response)
 
     return BatchArbitrateResponse(results=list(results))
 
