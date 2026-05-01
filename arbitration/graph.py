@@ -5,6 +5,7 @@ from .schemas import CriticReport, Disagreement
 from .critics.factual import run_factual_critic
 from .critics.logical import run_logical_critic
 from .critics.completeness import run_completeness_critic
+from .adjudicator import run_adjudicator
 from .config import get_settings
 
 
@@ -75,6 +76,18 @@ def _detect_disagreements(state: ArbitrationState) -> dict:
     }
 
 
+def _run_adjudicator(state: ArbitrationState) -> dict:
+    verdict = run_adjudicator(
+        llm_output=state["llm_output"],
+        factual_report=state["factual_report"],
+        logical_report=state["logical_report"],
+        completeness_report=state["completeness_report"],
+        disagreements=state["disagreements"],
+        original_prompt=state.get("original_prompt"),
+    )
+    return {"verdict": verdict}
+
+
 def build_graph():
     graph = StateGraph(ArbitrationState)
 
@@ -82,6 +95,7 @@ def build_graph():
     graph.add_node("logical_critic", _run_logical)
     graph.add_node("completeness_critic", _run_completeness)
     graph.add_node("detect_disagreements", _detect_disagreements)
+    graph.add_node("adjudicator", _run_adjudicator)
 
     graph.add_edge("__start__", "factual_critic")
     graph.add_edge("__start__", "logical_critic")
@@ -91,7 +105,8 @@ def build_graph():
     graph.add_edge("logical_critic", "detect_disagreements")
     graph.add_edge("completeness_critic", "detect_disagreements")
 
-    graph.add_edge("detect_disagreements", END)
+    graph.add_edge("detect_disagreements", "adjudicator")
+    graph.add_edge("adjudicator", END)
 
     return graph.compile()
 
