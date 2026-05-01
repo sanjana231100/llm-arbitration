@@ -1,8 +1,9 @@
 import streamlit as st
 import httpx
 import json
+import os
 
-API_BASE = "http://localhost:8000"
+API_BASE = os.environ.get("API_BASE", "http://localhost:8000")
 
 st.set_page_config(
     page_title="LLM Arbitration System",
